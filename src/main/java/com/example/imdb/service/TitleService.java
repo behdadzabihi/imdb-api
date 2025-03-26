@@ -1,5 +1,6 @@
 package com.example.imdb.service;
 
+import com.example.imdb.dto.BestTitleByYearDto;
 import com.example.imdb.model.Title;
 import com.example.imdb.model.TitleRating;
 import lombok.AllArgsConstructor;
@@ -14,12 +15,13 @@ import java.util.stream.Collectors;
 public class TitleService {
     private final DataLoaderService dataLoaderService;
 
-    public Map<Integer, Title> getBestTitlesByGenreEachYear(String genre) {
+
+    public List<BestTitleByYearDto> getBestTitlesByGenreEachYear(String genre) {
         Map<Integer, List<Title>> titlesByYear = dataLoaderService.getTitles().values().stream()
                 .filter(title -> Arrays.asList(title.getGenres()).contains(genre) && title.getStartYear() > 0)
                 .collect(Collectors.groupingBy(Title::getStartYear));
 
-        Map<Integer, Title> bestTitles = new HashMap<>();
+        List<BestTitleByYearDto> bestTitles = new ArrayList<>();
 
         titlesByYear.forEach((year, titles) -> {
             titles.stream()
@@ -28,10 +30,18 @@ public class TitleService {
                         TitleRating rating = dataLoaderService.getTitleRatings().get(title.getTconst());
                         return rating.getAverageRating() * Math.log(rating.getNumVotes() + 1);
                     }))
-                    .ifPresent(bestTitle -> bestTitles.put(year, bestTitle));
+                    .ifPresent(bestTitle -> {
+                        TitleRating rating = dataLoaderService.getTitleRatings().get(bestTitle.getTconst());
+                        BestTitleByYearDto dto = mapToDto(year, bestTitle, rating);
+                        bestTitles.add(dto);
+                    });
         });
 
         return bestTitles;
+    }
+
+    private BestTitleByYearDto mapToDto(int year, Title title, TitleRating rating) {
+        return new BestTitleByYearDto(year, title.getPrimaryTitle(), rating.getAverageRating());
     }
 }
 

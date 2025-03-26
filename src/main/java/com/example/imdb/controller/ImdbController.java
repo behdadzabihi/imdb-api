@@ -1,19 +1,22 @@
 package com.example.imdb.controller;
 
+import com.example.imdb.dto.BestTitleByYearDto;
 import com.example.imdb.model.*;
 import com.example.imdb.service.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import jakarta.validation.constraints.NotBlank;
 import java.util.*;
 
 
 @RestController
 @RequestMapping("/api/imdb")
 @RequiredArgsConstructor
+@Validated
 public class ImdbController {
 
     private final CrewService crewService;
@@ -27,14 +30,17 @@ public class ImdbController {
         return crewService.getTitlesWithSameDirectorWriterAlive();
     }
 
-    @GetMapping("/titles/common-actors")
-    public List<Title> getTitlesWithCommonActors(@RequestParam String actor1Id, @RequestParam String actor2Id) {
+    @GetMapping("/common-actors")
+    public List<Title> getTitlesWithCommonActors(
+            @RequestParam @NotBlank(message = "actor1Id must not be blank") String actor1Id,
+            @RequestParam @NotBlank(message = "actor2Id must not be blank") String actor2Id) {
         requestCounterService.increment();
         return titlePrincipleService.getCommonTitlesByActors(actor1Id, actor2Id);
     }
 
-    @GetMapping("/titles/best-by-genre")
-    public Map<Integer, Title> getBestTitlesByGenreEachYear(@RequestParam String genre) {
+    @GetMapping("/best-by-genre")
+    public List<BestTitleByYearDto> getBestTitlesByGenreEachYear(
+            @RequestParam @NotBlank(message = "genre must not be blank") String genre) {
         requestCounterService.increment();
         return titleService.getBestTitlesByGenreEachYear(genre);
     }
